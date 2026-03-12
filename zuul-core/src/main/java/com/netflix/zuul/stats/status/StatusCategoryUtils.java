@@ -91,7 +91,8 @@ public class StatusCategoryUtils {
     }
 
     public static boolean isResponseHttpErrorStatus(int status) {
-        return (status < 100 || status >= 500);
+        // Branchless check: negative if status < 100 or status >= 500
+        return (((status - 100) | (499 - status)) < 0);
     }
 
     public static void storeStatusCategoryIfNotAlreadyFailure(SessionContext context, StatusCategory statusCategory) {
