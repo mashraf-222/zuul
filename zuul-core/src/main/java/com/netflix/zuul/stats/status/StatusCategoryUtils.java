@@ -64,7 +64,9 @@ public class StatusCategoryUtils {
 
     @Nullable
     public static String getOriginStatusCategoryReason(SessionContext ctx) {
-        return ctx.get(CommonContextKeys.ORIGIN_STATUS_CATEGORY_REASON);
+        // Cache the key reference in a local variable to avoid repeated static field resolution in hot paths.
+        var key = CommonContextKeys.ORIGIN_STATUS_CATEGORY_REASON;
+        return ctx.get(key);
     }
 
     public static void setOriginStatusCategory(SessionContext ctx, StatusCategory statusCategory) {
