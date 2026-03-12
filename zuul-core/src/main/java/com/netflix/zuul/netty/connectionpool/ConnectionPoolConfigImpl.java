@@ -93,7 +93,10 @@ public class ConnectionPoolConfigImpl implements ConnectionPoolConfig {
 
     @Override
     public int perServerWaterline() {
-        return clientConfig.getPropertyAsInteger(PER_SERVER_WATERLINE, DEFAULT_PER_SERVER_WATERLINE);
+        // Cache field to a local variable to avoid repeated field access in hot paths.
+        IClientConfig cfg = clientConfig;
+        Integer val = cfg.getPropertyAsInteger(PER_SERVER_WATERLINE, DEFAULT_PER_SERVER_WATERLINE);
+        return (val != null) ? val.intValue() : DEFAULT_PER_SERVER_WATERLINE;
     }
 
     @Override
