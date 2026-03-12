@@ -58,17 +58,22 @@ public class RequestAttempts extends ArrayList<RequestAttempt> {
     }
 
     public String toJSON() {
-        ArrayNode array = JACKSON_MAPPER.createArrayNode();
-        for (RequestAttempt attempt : this) {
-            array.add(attempt.toJsonNode());
-        }
+            // Pre-size the array node to avoid resizing and use index-based access
+            int sz = size();
+            ArrayNode array = JACKSON_MAPPER.getNodeFactory().arrayNode(sz);
 
-        try {
-            return JACKSON_MAPPER.writeValueAsString(array);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("Error serializing RequestAttempts!", e);
+            // Use index-based loop to avoid allocating an Iterator for the enhanced-for loop
+            for (int i = 0; i < sz; i++) {
+                RequestAttempt attempt = get(i);
+                array.add(attempt.toJsonNode());
+            }
+
+            try {
+                return JACKSON_MAPPER.writeValueAsString(array);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException("Error serializing RequestAttempts!", e);
+            }
         }
-    }
 
     @Override
     public String toString() {
