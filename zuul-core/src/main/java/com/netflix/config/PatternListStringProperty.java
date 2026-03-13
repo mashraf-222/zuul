@@ -38,16 +38,50 @@ public class PatternListStringProperty extends DerivedStringProperty<List<Patter
     protected List<Pattern> derive(String value) {
         ArrayList<Pattern> ptns = new ArrayList<>();
         if (value != null) {
-            for (String ptnTxt : value.split(",", -1)) {
+            int len = value.length();
+            // Estimate tokens as commas + 1 to avoid repeated resizing
+            int commas = 0;
+            for (int i = 0; i < len; i++) {
+                if (value.charAt(i) == ',') {
+                    commas++;
+                }
+            }
+            ptns = new ArrayList<>(Math.max(1, commas + 1));
+
+            // Cache commonly used strings to avoid repeated calls in the loop
+            String nameStr = String.valueOf(this.getName());
+            String valueStr = String.valueOf(this.getValue());
+            String patternStr = String.valueOf(value);
+
+            int start = 0;
+            while (true) {
+                int idx = value.indexOf(',', start);
+                int end = (idx == -1) ? len : idx;
+
+                // Trim using index arithmetic to avoid creating an extra String from trim()
+                int ts = start;
+                while (ts < end && value.charAt(ts) <= ' ') {
+                    ts++;
+                }
+                int te = end;
+                while (te > ts && value.charAt(te - 1) <= ' ') {
+                    te--;
+                }
+                String token = value.substring(ts, te);
                 try {
-                    ptns.add(Pattern.compile(ptnTxt.trim()));
+                    ptns.add(Pattern.compile(token));
                 } catch (Exception e) {
                     LOG.error(
                             "Error parsing regex pattern list from property! name = {}, value = {}, pattern = {}",
-                            String.valueOf(this.getName()),
-                            String.valueOf(this.getValue()),
-                            String.valueOf(value));
+                            nameStr,
+                            valueStr,
+                            patternStr);
                 }
+
+                if (idx == -1) {
+                    break;
+                }
+                start = idx + 1;
             }
         }
         return ptns;
