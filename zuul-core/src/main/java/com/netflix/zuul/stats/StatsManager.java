@@ -177,7 +177,23 @@ public class StatsManager {
 
     @VisibleForTesting
     static final boolean isIPv6(String ip) {
-        return ip.split(":", -1).length == 8;
+        // Avoid String.split which allocates an array and uses regex.
+        // Count ':' characters; split(":", -1).length == 8 iff there are 7 ':' characters.
+        if (ip == null) {
+            throw new NullPointerException();
+        }
+        int colonCount = 0;
+        int len = ip.length();
+        for (int i = 0; i < len; i++) {
+            if (ip.charAt(i) == ':') {
+                colonCount++;
+                if (colonCount > 7) {
+                    // early exit if more than needed
+                    return false;
+                }
+            }
+        }
+        return colonCount == 7;
     }
 
     @VisibleForTesting
