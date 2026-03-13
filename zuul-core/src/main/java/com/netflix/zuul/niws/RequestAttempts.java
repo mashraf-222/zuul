@@ -42,8 +42,9 @@ public class RequestAttempts extends ArrayList<RequestAttempt> {
 
     @Nullable
     public RequestAttempt getFinalAttempt() {
-        if (size() > 0) {
-            return get(size() - 1);
+        int s = size();
+        if (s > 0) {
+            return get(s - 1);
         } else {
             return null;
         }
