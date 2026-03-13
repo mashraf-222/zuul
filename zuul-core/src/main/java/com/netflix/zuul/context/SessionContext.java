@@ -71,6 +71,9 @@ public final class SessionContext extends HashMap<String, Object> implements Clo
     private static final String KEY_FILTER_EXECS = "_filter_executions";
 
     private final IdentityHashMap<Key<?>, ?> typedMap = new IdentityHashMap<>();
+    private final StringBuilder filterExecutionsRef;
+    private final Map<String, Object> eventPropertiesRef;
+    private final List<FilterError> filterErrorsRef;
 
     /**
      * A Key is type-safe, identity-based key into the Session Context.
@@ -122,9 +125,17 @@ public final class SessionContext extends HashMap<String, Object> implements Clo
         // 16 entries.
         super(INITIAL_SIZE);
 
-        put(KEY_FILTER_EXECS, new StringBuilder());
-        put(KEY_EVENT_PROPS, new HashMap<String, Object>(EVENT_PROPERTIES_INITIAL_SIZE));
-        put(KEY_FILTER_ERRORS, new ArrayList<FilterError>());
+        StringBuilder sb = new StringBuilder();
+        put(KEY_FILTER_EXECS, sb);
+        this.filterExecutionsRef = sb;
+
+        HashMap<String, Object> evProps = new HashMap<String, Object>(EVENT_PROPERTIES_INITIAL_SIZE);
+        put(KEY_EVENT_PROPS, evProps);
+        this.eventPropertiesRef = evProps;
+
+        ArrayList<FilterError> errs = new ArrayList<FilterError>();
+        put(KEY_FILTER_ERRORS, errs);
+        this.filterErrorsRef = errs;
     }
 
     public static <T> Key<T> newKey(String name) {
@@ -349,7 +360,7 @@ public final class SessionContext extends HashMap<String, Object> implements Clo
     }
 
     public String getErrorEndpoint() {
-        return (String) get("_error-endpoint");
+        return (String) super.get("_error-endpoint");
     }
 
     public void setErrorEndpoint(String name) {
