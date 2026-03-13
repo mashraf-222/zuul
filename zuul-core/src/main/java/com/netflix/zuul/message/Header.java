@@ -22,6 +22,7 @@ package com.netflix.zuul.message;
 public final class Header {
     private final HeaderName name;
     private final String value;
+    private transient volatile String toStringCache;
 
     public Header(HeaderName name, String value) {
         if (name == null) {
@@ -69,6 +70,17 @@ public final class Header {
 
     @Override
     public String toString() {
-        return String.format("%s: %s", name, value);
+        String cached = toStringCache;
+        if (cached == null) {
+            // Compute once and cache - preserve original formatting "%s: %s"
+            String nameStr = name.toString();
+            String valueStr = value;
+            int estimatedLength = nameStr.length() + 2 + (valueStr == null ? 4 : valueStr.length()); // "null" is 4 chars
+            StringBuilder sb = new StringBuilder(estimatedLength);
+            sb.append(nameStr).append(": ").append(valueStr);
+            cached = sb.toString();
+            toStringCache = cached;
+        }
+        return cached;
     }
 }
