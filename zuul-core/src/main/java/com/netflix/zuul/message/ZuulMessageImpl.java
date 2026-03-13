@@ -162,7 +162,9 @@ public class ZuulMessageImpl implements ZuulMessage {
     @Override
     public int getBodyLength() {
         int size = 0;
-        for (HttpContent chunk : bodyChunks) {
+        final List<HttpContent> chunks = this.bodyChunks;
+        for (int i = 0, n = chunks.size(); i < n; i++) {
+            HttpContent chunk = chunks.get(i);
             // writer index tracks the total number of bytes written to the buffer regardless of buffer reads
             size += chunk.content().writerIndex();
         }
