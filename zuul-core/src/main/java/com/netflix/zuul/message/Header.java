@@ -22,6 +22,7 @@ package com.netflix.zuul.message;
 public final class Header {
     private final HeaderName name;
     private final String value;
+    private final int hash;
 
     public Header(HeaderName name, String value) {
         if (name == null) {
@@ -29,6 +30,9 @@ public final class Header {
         }
         this.name = name;
         this.value = value;
+        int result = name.hashCode();
+        result = 31 * result + (value != null ? value.hashCode() : 0);
+        this.hash = result;
     }
 
     public String getKey() {
@@ -62,9 +66,7 @@ public final class Header {
 
     @Override
     public int hashCode() {
-        int result = name.hashCode();
-        result = 31 * result + (value != null ? value.hashCode() : 0);
-        return result;
+        return hash;
     }
 
     @Override
