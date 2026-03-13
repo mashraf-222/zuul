@@ -26,7 +26,9 @@ public final class SpectatorUtils {
     private SpectatorUtils() {}
 
     public static Counter newCounter(String name, String id) {
-        return Spectator.globalRegistry().counter(name, "id", id);
+        com.netflix.spectator.api.Registry registry = Spectator.globalRegistry();
+        Id idObj = registry.createId(name, "id", id);
+        return registry.counter(idObj);
     }
 
     public static Counter newCounter(String name, String id, String... tags) {
