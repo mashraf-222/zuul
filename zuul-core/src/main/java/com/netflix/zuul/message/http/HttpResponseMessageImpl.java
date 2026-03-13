@@ -186,10 +186,74 @@ public class HttpResponseMessageImpl implements HttpResponseMessage {
 
     @Override
     public boolean hasSetCookieWithName(String cookieName) {
+        // Quick exit if there are no Set-Cookie headers (avoids allocating the list)
+        if (!getHeaders().contains(HttpHeaderNames.SET_COOKIE)) {
+            return false;
+        }
+
+        // Preserve original behavior when cookieName is null: fall back to original decode loop
+        // to keep exception semantics identical.
+        if (cookieName == null) {
+            for (String setCookieValue : getHeaders().getAll(HttpHeaderNames.SET_COOKIE)) {
+                Cookie cookie = ClientCookieDecoder.STRICT.decode(setCookieValue);
+                if (cookie.name().equalsIgnoreCase(cookieName)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // Cache length for faster comparisons and avoid allocations
+        int targetLen = cookieName.length();
+
         for (String setCookieValue : getHeaders().getAll(HttpHeaderNames.SET_COOKIE)) {
-            Cookie cookie = ClientCookieDecoder.STRICT.decode(setCookieValue);
-            if (cookie.name().equalsIgnoreCase(cookieName)) {
-                return true;
+            if (setCookieValue == null || setCookieValue.isEmpty()) {
+                // Let the decoder handle malformed/empty values (as original did), but skip quick check
+                // to avoid unnecessary work.
+                Cookie cookie = ClientCookieDecoder.STRICT.decode(setCookieValue);
+                if (cookie.name().equalsIgnoreCase(cookieName)) {
+                    return true;
+                }
+                continue;
+            }
+
+            // Find the '=' that separates name and value. If absent, we defer to the decoder to
+            // preserve original exception/behavior, but try to avoid decoding when clearly impossible.
+            int eq = setCookieValue.indexOf('=');
+            if (eq <= 0) {
+                // No '=' or '=' at position 0 (no name) - must decode to replicate original behavior.
+                Cookie cookie = ClientCookieDecoder.STRICT.decode(setCookieValue);
+                if (cookie.name().equalsIgnoreCase(cookieName)) {
+                    return true;
+                }
+                continue;
+            }
+
+            // Identify the start of the name (skip leading spaces)
+            int start = 0;
+            while (start < eq && Character.isWhitespace(setCookieValue.charAt(start))) {
+                start++;
+            }
+            // Identify the end of the name (trim trailing spaces before '=')
+            int end = eq - 1;
+            while (end >= start && Character.isWhitespace(setCookieValue.charAt(end))) {
+                end--;
+            }
+
+            int nameLen = end - start + 1;
+            if (nameLen != targetLen) {
+                // lengths differ -> cannot match; skip expensive decode
+                continue;
+            }
+
+            // Case-insensitive region match without allocating substrings
+            if (setCookieValue.regionMatches(true, start, cookieName, 0, targetLen)) {
+                // Potential match; delegate to full decoder to ensure exact semantics and to preserve
+                // behavior (including possible exceptions) as the original implementation.
+                Cookie cookie = ClientCookieDecoder.STRICT.decode(setCookieValue);
+                if (cookie.name().equalsIgnoreCase(cookieName)) {
+                    return true;
+                }
             }
         }
         return false;
