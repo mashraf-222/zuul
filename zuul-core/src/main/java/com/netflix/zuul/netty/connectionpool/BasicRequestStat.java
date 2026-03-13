@@ -76,15 +76,26 @@ public class BasicRequestStat implements RequestStat {
 
     @Override
     public boolean finishIfNotAlready() {
+        // Fast-path: avoid synchronization if already finished
         if (isFinished) {
             return false;
         }
-        stopwatch.stop();
 
-        publishMetrics();
+        // Synchronize only when necessary to ensure only one thread does the stop/publish
+        synchronized (this) {
+            if (isFinished) {
+                return false;
+            }
 
-        isFinished = true;
-        return true;
+            // Cache volatile stopwatch into local to avoid repeated volatile reads
+            Stopwatch sw = stopwatch;
+            sw.stop();
+
+            publishMetrics();
+
+            isFinished = true;
+            return true;
+        }
     }
 
     protected void publishMetrics() {
