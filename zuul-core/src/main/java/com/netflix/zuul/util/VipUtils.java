@@ -41,7 +41,8 @@ public final class VipUtils {
      * value is just a best guess and not suitable for security purposes.
      */
     public static String extractUntrustedAppNameFromVIP(String vipAddress) {
-        for (int i = 0; i < vipAddress.length(); i++) {
+        int len = vipAddress.length();
+        for (int i = 0; i < len; ++i) {
             char c = vipAddress.charAt(i);
             if (c == '-' || c == '.' || c == ':') {
                 return vipAddress.substring(0, i);
