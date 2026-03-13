@@ -69,12 +69,13 @@ public class HttpUtils {
         if (xForwardedFor == null) {
             return null;
         }
-        xForwardedFor = xForwardedFor.trim();
-        String tokenized[] = xForwardedFor.split(",", -1);
-        if (tokenized.length == 0) {
-            return null;
+        // Trim once, then find the first comma to avoid allocating an array via split.
+        String s = xForwardedFor.trim();
+        int comma = s.indexOf(',');
+        if (comma == -1) {
+            return s;
         } else {
-            return tokenized[0].trim();
+            return s.substring(0, comma).trim();
         }
     }
 
