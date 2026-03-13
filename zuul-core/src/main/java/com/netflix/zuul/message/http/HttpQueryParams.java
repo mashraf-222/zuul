@@ -215,7 +215,8 @@ public class HttpQueryParams implements Cloneable {
     }
 
     public boolean isTrailingEquals(String key) {
-        return trailingEquals.getOrDefault(key, false);
+        Boolean val = trailingEquals.get(key);
+        return val != null && val;
     }
 
     public void setTrailingEquals(String key, boolean trailingEquals) {
