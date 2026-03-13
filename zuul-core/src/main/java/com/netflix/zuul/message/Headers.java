@@ -559,7 +559,43 @@ public final class Headers {
     @Override
     @VisibleForTesting
     public int hashCode() {
-        return asMap().hashCode();
+        // Compute the same value as asMap().hashCode() but without allocating the map and per-key lists.
+        int n = size();
+        if (n == 0) {
+            return 0; // empty map hashCode is 0
+        }
+
+        // Map keys (in insertion order) to their index in keysOrdered/listHashes lists.
+        // Use HashMap for O(1) lookups and ArrayList for ordered traversal.
+        final int expectedKeyCount = Math.max(16, (int) (n / 0.75f) + 1);
+        java.util.HashMap<String, Integer> keyToIndex = new java.util.HashMap<>(expectedKeyCount);
+        ArrayList<String> keysOrdered = new ArrayList<>();
+        ArrayList<Integer> listHashes = new ArrayList<>();
+
+        for (int i = 0; i < n; i++) {
+            String key = name(i);
+            Integer idx = keyToIndex.get(key);
+            if (idx == null) {
+                idx = keysOrdered.size();
+                keyToIndex.put(key, idx);
+                keysOrdered.add(key);
+                listHashes.add(1); // initial list hash as per List.hashCode() spec
+            }
+            int curHash = listHashes.get(idx);
+            String v = value(i);
+            int vHash = (v == null) ? 0 : v.hashCode();
+            curHash = 31 * curHash + vHash;
+            listHashes.set(idx, curHash);
+        }
+
+        int mapHash = 0;
+        for (int i = 0; i < keysOrdered.size(); i++) {
+            String k = keysOrdered.get(i);
+            int keyHash = (k == null) ? 0 : k.hashCode();
+            int valueHash = listHashes.get(i);
+            mapHash += (keyHash ^ valueHash);
+        }
+        return mapHash;
     }
 
     /**
