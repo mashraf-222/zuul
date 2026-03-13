@@ -42,6 +42,7 @@ public class SslHandshakeInfo {
     private final boolean isOfIntermediary;
     private final boolean usingExternalPSK;
     private final ClientPSKIdentityInfo clientPSKIdentityInfo;
+    private transient volatile String cachedToString;
 
     /**
      * Use {@link SslHandshakeInfo#builder()} instead.
@@ -174,13 +175,26 @@ public class SslHandshakeInfo {
 
     @Override
     public String toString() {
-        return "SslHandshakeInfo{" + "protocol='"
-                + protocol + '\'' + ", cipherSuite='"
-                + cipherSuite + '\'' + ", namedGroup='"
-                + namedGroup + '\'' + ", clientAuthRequirement="
-                + clientAuthRequirement + ", serverCertificate="
-                + serverCertificate + ", clientCertificate="
-                + clientCertificate + ", isOfIntermediary="
-                + isOfIntermediary + '}';
+        String result = cachedToString;
+        if (result != null) {
+            return result;
+        }
+        // Estimate capacity: base text plus lengths of variable string parts to reduce reallocations.
+        int estimated = 96;
+        if (protocol != null) estimated += protocol.length();
+        if (cipherSuite != null) estimated += cipherSuite.length();
+        if (namedGroup != null) estimated += namedGroup.length();
+        StringBuilder sb = new StringBuilder(estimated);
+        sb.append("SslHandshakeInfo{").append("protocol='")
+                .append(protocol).append('\'').append(", cipherSuite='")
+                .append(cipherSuite).append('\'').append(", namedGroup='")
+                .append(namedGroup).append('\'').append(", clientAuthRequirement=")
+                .append(clientAuthRequirement).append(", serverCertificate=")
+                .append(serverCertificate).append(", clientCertificate=")
+                .append(clientCertificate).append(", isOfIntermediary=")
+                .append(isOfIntermediary).append('}');
+        result = sb.toString();
+        cachedToString = result;
+        return result;
     }
 }
