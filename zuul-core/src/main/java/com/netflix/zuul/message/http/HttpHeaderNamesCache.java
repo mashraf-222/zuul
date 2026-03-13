@@ -34,7 +34,7 @@ public class HttpHeaderNamesCache {
     }
 
     public boolean isFull() {
-        return cache.size() >= maxSize;
+        return cache.mappingCount() >= (long) maxSize;
     }
 
     public HeaderName get(String name) {
