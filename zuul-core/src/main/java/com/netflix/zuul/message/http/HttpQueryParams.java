@@ -162,20 +162,24 @@ public class HttpQueryParams implements Cloneable {
 
     public String toEncodedString() {
         StringBuilder sb = new StringBuilder();
+        java.nio.charset.Charset cs = StandardCharsets.UTF_8;
+        Map<String, Boolean> te = trailingEquals;
+        boolean first = true;
         for (Map.Entry<String, String> entry : entries()) {
-            sb.append(URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8));
-            if (!Strings.isNullOrEmpty(entry.getValue())) {
+            if (first) {
+                first = false;
+            } else {
+                sb.append('&');
+            }
+
+            sb.append(URLEncoder.encode(entry.getKey(), cs));
+            String value = entry.getValue();
+            if (value != null && !value.isEmpty()) {
                 sb.append('=');
-                sb.append(URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8));
-            } else if (isTrailingEquals(entry.getKey())) {
+                sb.append(URLEncoder.encode(value, cs));
+            } else if (te.getOrDefault(entry.getKey(), false)) {
                 sb.append('=');
             }
-            sb.append('&');
-        }
-
-        // Remove trailing '&'.
-        if (!sb.isEmpty() && sb.charAt(sb.length() - 1) == '&') {
-            sb.deleteCharAt(sb.length() - 1);
         }
         return sb.toString();
     }
