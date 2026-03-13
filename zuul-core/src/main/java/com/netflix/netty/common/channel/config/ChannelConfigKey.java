@@ -49,6 +49,13 @@ public class ChannelConfigKey<T> {
 
     @Override
     public String toString() {
-        return "ChannelConfigKey{" + "key='" + key + '\'' + ", defaultValue=" + defaultValue + '}';
+        // Use local references to avoid repeated field access and compute defaultValue's string once.
+        String k = key;
+        String dv = String.valueOf(defaultValue);
+        // Estimate capacity to avoid StringBuilder growth: 39 is the combined length of the constant parts.
+        int capacity = 39 + (k != null ? k.length() : 4) + dv.length();
+        StringBuilder sb = new StringBuilder(capacity);
+        sb.append("ChannelConfigKey{key='").append(k).append('\'').append(", defaultValue=").append(dv).append('}');
+        return sb.toString();
     }
 }
