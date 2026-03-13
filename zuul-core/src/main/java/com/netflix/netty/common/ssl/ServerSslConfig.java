@@ -156,14 +156,18 @@ public class ServerSslConfig {
 
     @Override
     public String toString() {
-        return "ServerSslConfig{" + "protocols="
-                + Arrays.toString(protocols) + ", ciphers="
-                + ciphers + ", certChainFile="
-                + certChainFile + ", keyFile="
-                + keyFile + ", clientAuth="
-                + clientAuth + ", clientAuthTrustStoreFile="
-                + clientAuthTrustStoreFile + ", sessionTimeout="
-                + sessionTimeout + ", sessionTicketsEnabled="
-                + sessionTicketsEnabled + '}';
+        // Cache the protocols string and use a single StringBuilder to minimize temporary allocations.
+        String protocolsStr = Arrays.toString(protocols);
+        StringBuilder sb = new StringBuilder(128);
+        sb.append("ServerSslConfig{protocols=").append(protocolsStr)
+          .append(", ciphers=").append(ciphers)
+          .append(", certChainFile=").append(certChainFile)
+          .append(", keyFile=").append(keyFile)
+          .append(", clientAuth=").append(clientAuth)
+          .append(", clientAuthTrustStoreFile=").append(clientAuthTrustStoreFile)
+          .append(", sessionTimeout=").append(sessionTimeout)
+          .append(", sessionTicketsEnabled=").append(sessionTicketsEnabled)
+          .append('}');
+        return sb.toString();
     }
 }
