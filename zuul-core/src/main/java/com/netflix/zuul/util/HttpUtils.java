@@ -97,23 +97,52 @@ public class HttpUtils {
     }
 
     /**
-     * Ensure decoded new lines are not propagated in headers, in order to prevent XSS
-     *
-     * @param input - decoded header string
-     * @return - clean header string
-     */
-    public static String stripMaliciousHeaderChars(@Nullable String input) {
-        if (input == null) {
-            return null;
-        }
-        // TODO(carl-mastrangelo): implement this more efficiently.
-        for (char c : MALICIOUS_HEADER_CHARS) {
-            if (input.indexOf(c) != -1) {
-                input = input.replace(Character.toString(c), "");
+         * Ensure decoded new lines are not propagated in headers, in order to prevent XSS
+         *
+         * @param input - decoded header string
+         * @return - clean header string
+         */
+        // Efficient single-pass removal using a precomputed bitmap of malicious characters.
+        public static String stripMaliciousHeaderChars(@Nullable String input) {
+            if (input == null) {
+                return null;
             }
+
+            // Lazy precomputed map of malicious chars for fast lookup.
+            // This avoids repeated O(n*m) scans and many intermediate String allocations.
+            final boolean[] map = MALICIOUS_HEADER_CHAR_MAP;
+
+            int len = input.length();
+            // First quick scan to determine if any malicious char exists. If none, return original input.
+            for (int i = 0; i < len; i++) {
+                char c = input.charAt(i);
+                if (c < map.length && map[c]) {
+                    // Build result skipping malicious chars
+                    StringBuilder sb = new StringBuilder(len);
+                    for (int j = 0; j < len; j++) {
+                        char cj = input.charAt(j);
+                        if (!(cj < map.length && map[cj])) {
+                            sb.append(cj);
+                        }
+                    }
+                    return sb.toString();
+                }
+            }
+            return input;
         }
-        return input;
-    }
+
+        // Precompute a fast lookup table for malicious header characters.
+        // Using a bitmap sized to Character.MAX_VALUE+1 (65536) keeps lookups O(1) and avoids
+        // creating temporary Sets/Boxes on every call. Memory cost is small and allocated once.
+        private static final boolean[] MALICIOUS_HEADER_CHAR_MAP = buildMaliciousCharMap();
+
+        private static boolean[] buildMaliciousCharMap() {
+            boolean[] map = new boolean[Character.MAX_VALUE + 1];
+            for (char c : MALICIOUS_HEADER_CHARS) {
+                map[c] = true;
+            }
+            return map;
+        }
 
     public static boolean hasNonZeroContentLengthHeader(ZuulMessage msg) {
         Integer contentLengthVal = getContentLengthIfPresent(msg);
