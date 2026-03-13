@@ -202,7 +202,15 @@ public class HttpQueryParams implements Cloneable {
     @Override
     protected HttpQueryParams clone() {
         HttpQueryParams copy = new HttpQueryParams();
-        copy.delegate.putAll(this.delegate);
+        ListMultimap<String, String> src = this.delegate;
+        if (src.isEmpty()) {
+            return copy;
+        }
+        ListMultimap<String, String> dst = copy.delegate;
+        // Iterate over entries and add directly to avoid extra overhead from putAll
+        for (Map.Entry<String, String> e : src.entries()) {
+            dst.put(e.getKey(), e.getValue());
+        }
         return copy;
     }
 
