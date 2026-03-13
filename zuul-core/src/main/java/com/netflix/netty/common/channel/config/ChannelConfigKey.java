@@ -24,15 +24,18 @@ package com.netflix.netty.common.channel.config;
 public class ChannelConfigKey<T> {
     private final String key;
     private final T defaultValue;
+    private final boolean hasDefault;
 
     public ChannelConfigKey(String key, T defaultValue) {
         this.key = key;
         this.defaultValue = defaultValue;
+        this.hasDefault = defaultValue != null;
     }
 
     public ChannelConfigKey(String key) {
         this.key = key;
         this.defaultValue = null;
+        this.hasDefault = false;
     }
 
     public String key() {
@@ -44,7 +47,7 @@ public class ChannelConfigKey<T> {
     }
 
     public boolean hasDefaultValue() {
-        return defaultValue != null;
+        return hasDefault;
     }
 
     @Override
