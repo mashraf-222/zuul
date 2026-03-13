@@ -50,9 +50,20 @@ public class FilterError implements Cloneable {
 
     @Override
     public String toString() {
-        return "FilterError{" + "filterName='"
-                + filterName + '\'' + ", filterType='"
-                + filterType + '\'' + ", exception="
-                + exception + '}';
+        // Use a single StringBuilder to avoid repeated intermediate String allocations.
+        // Estimate an initial capacity to reduce resizing; this keeps behavior identical.
+        int estimated = 32;
+        if (filterName != null) {
+            estimated += filterName.length();
+        }
+        if (filterType != null) {
+            estimated += filterType.length();
+        }
+        // exception may be null; appending it will produce "null" which matches original behavior.
+        StringBuilder sb = new StringBuilder(estimated);
+        sb.append("FilterError{").append("filterName='").append(filterName)
+          .append('\'').append(", filterType='").append(filterType)
+          .append('\'').append(", exception=").append(exception).append('}');
+        return sb.toString();
     }
 }
