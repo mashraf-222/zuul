@@ -71,6 +71,9 @@ public final class SessionContext extends HashMap<String, Object> implements Clo
     private static final String KEY_FILTER_EXECS = "_filter_executions";
 
     private final IdentityHashMap<Key<?>, ?> typedMap = new IdentityHashMap<>();
+    private transient Object lastGetKey;
+    private transient Object lastGetValue;
+    private transient int lastGetModCount = -1;
 
     /**
      * A Key is type-safe, identity-based key into the Session Context.
