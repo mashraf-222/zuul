@@ -69,6 +69,7 @@ public class StatsManager {
             new ConcurrentHashMap<String, NamedCountingMonitor>();
 
     protected static StatsManager INSTANCE = new StatsManager();
+    private static final String[] HOST_REPLACEMENTS = {"EC2", "IP", "IP", "CDN", "CDN", "CDN"};
 
     public static StatsManager getManager() {
         return INSTANCE;
@@ -105,24 +106,19 @@ public class StatsManager {
             // I know which type of host matched by the number of the group that is non-null
             // I use a different replacement string per host type to make the Epic stats more clear
             if (m.matches()) {
-                if (m.group(1) != null) {
-                    host = host.replace(m.group(1), "EC2");
-                } else if (m.group(2) != null) {
-                    host = host.replace(m.group(2), "IP");
-                } else if (m.group(3) != null) {
-                    host = host.replace(m.group(3), "IP");
-                } else if (m.group(4) != null) {
-                    host = host.replace(m.group(4), "CDN");
-                } else if (m.group(5) != null) {
-                    host = host.replace(m.group(5), "CDN");
-                } else if (m.group(6) != null) {
-                    host = host.replace(m.group(6), "CDN");
+                // Check groups 1..6 in order and replace all occurrences of the matched group
+                for (int i = 1; i <= HOST_REPLACEMENTS.length; i++) {
+                    String g = m.group(i);
+                    if (g != null) {
+                        host = host.replace(g, HOST_REPLACEMENTS[i - 1]);
+                        break;
+                    }
                 }
             }
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
         }
-        return String.format("host_%s", host);
+        return "host_" + host;
     }
 
     private static final String protocolKey(String proto) {
