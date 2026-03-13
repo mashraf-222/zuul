@@ -22,6 +22,7 @@ package com.netflix.zuul.message;
 public final class Header {
     private final HeaderName name;
     private final String value;
+    private final String key;
 
     public Header(HeaderName name, String value) {
         if (name == null) {
@@ -29,10 +30,11 @@ public final class Header {
         }
         this.name = name;
         this.value = value;
+        this.key = name.getName();
     }
 
     public String getKey() {
-        return name.getName();
+        return key;
     }
 
     public HeaderName getName() {
