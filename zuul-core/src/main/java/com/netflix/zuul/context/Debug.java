@@ -55,7 +55,13 @@ public class Debug {
     }
 
     public static boolean debugRouting(SessionContext ctx) {
-        return ctx.debugRouting();
+        // Explicit fast-fail for null to preserve the same NullPointerException semantics
+        // while making the callsite slightly more JIT-friendly by using a local reference.
+        if (ctx == null) {
+            throw new NullPointerException();
+        }
+        SessionContext local = ctx;
+        return local.debugRouting();
     }
 
     public static void addRoutingDebug(SessionContext ctx, String line) {
