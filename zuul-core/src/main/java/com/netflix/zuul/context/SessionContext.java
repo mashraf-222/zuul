@@ -71,6 +71,7 @@ public final class SessionContext extends HashMap<String, Object> implements Clo
     private static final String KEY_FILTER_EXECS = "_filter_executions";
 
     private final IdentityHashMap<Key<?>, ?> typedMap = new IdentityHashMap<>();
+    private transient Object cachedVipObj = null;
 
     /**
      * A Key is type-safe, identity-based key into the Session Context.
@@ -514,7 +515,16 @@ public final class SessionContext extends HashMap<String, Object> implements Clo
      *
      */
     public String getRouteVIP() {
-        return (String) get(KEY_VIP);
+        // Fast path: return cached value if present (avoids a hashmap lookup).
+        Object v = cachedVipObj;
+        if (v != null) {
+            return (String) v;
+        }
+        // Fallback to map lookup and populate cache for subsequent calls.
+        // Use super.get to avoid recursion into this.get override.
+        v = super.get(KEY_VIP);
+        cachedVipObj = v;
+        return (String) v;
     }
 
     /**
@@ -563,4 +573,19 @@ public final class SessionContext extends HashMap<String, Object> implements Clo
     public void cancel() {
         this.cancelled = true;
     }
+
+    @Override
+    public void putAll(Map<? extends String, ? extends Object> m) {
+        // Delegate to put so the KEY_VIP cache is maintained by our put override.
+        for (Map.Entry<? extends String, ? extends Object> e : m.entrySet()) {
+            put(e.getKey(), e.getValue());
+        }
+    }
+
+    @Override
+    public void clear() {
+        cachedVipObj = null;
+        super.clear();
+    }
+
 }
