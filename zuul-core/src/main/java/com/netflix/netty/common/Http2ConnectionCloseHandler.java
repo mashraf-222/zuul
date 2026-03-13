@@ -231,11 +231,11 @@ public class Http2ConnectionCloseHandler extends ChannelDuplexHandler {
     protected boolean isAlreadyClosing(Channel parentChannel) {
         // If already closing, then just return.
         // This will happen because close() is called a 2nd time after sending the goaway frame.
-        if (HttpChannelFlags.CLOSING.get(parentChannel)) {
+        boolean already = HttpChannelFlags.CLOSING.get(parentChannel);
+        if (already) {
             return true;
-        } else {
-            HttpChannelFlags.CLOSING.set(parentChannel);
-            return false;
         }
+        HttpChannelFlags.CLOSING.set(parentChannel);
+        return false;
     }
 }
