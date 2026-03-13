@@ -96,23 +96,49 @@ public class HttpUtils {
         return ae != null && ae.contains(HttpHeaderValues.GZIP.toString());
     }
 
-    /**
-     * Ensure decoded new lines are not propagated in headers, in order to prevent XSS
-     *
-     * @param input - decoded header string
-     * @return - clean header string
-     */
     public static String stripMaliciousHeaderChars(@Nullable String input) {
         if (input == null) {
             return null;
         }
-        // TODO(carl-mastrangelo): implement this more efficiently.
-        for (char c : MALICIOUS_HEADER_CHARS) {
-            if (input.indexOf(c) != -1) {
-                input = input.replace(Character.toString(c), "");
+
+        // Build a fast lookup table for malicious chars and scan input once,
+        // avoiding repeated indexOf/replace calls and unnecessary string allocations.
+        char[] bad = MALICIOUS_HEADER_CHARS;
+        if (bad.length == 0) {
+            return input;
+        }
+
+        int max = 0;
+        for (char c : bad) {
+            if (c > max) {
+                max = c;
             }
         }
-        return input;
+
+        boolean[] isBad = new boolean[max + 1];
+        for (char c : bad) {
+            isBad[c] = true;
+        }
+
+        StringBuilder sb = null;
+        int len = input.length();
+        for (int i = 0; i < len; i++) {
+            char ch = input.charAt(i);
+            if (ch <= max && isBad[ch]) {
+                // first time we encounter a bad char, lazy-create a StringBuilder
+                // and copy the prefix up to this point
+                if (sb == null) {
+                    sb = new StringBuilder(len);
+                    sb.append(input, 0, i);
+                }
+                // skip this malicious char
+            } else if (sb != null) {
+                // only append when we've already started building a cleaned string
+                sb.append(ch);
+            }
+        }
+
+        return sb == null ? input : sb.toString();
     }
 
     public static boolean hasNonZeroContentLengthHeader(ZuulMessage msg) {
