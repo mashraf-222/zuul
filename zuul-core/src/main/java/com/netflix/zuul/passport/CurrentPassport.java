@@ -84,21 +84,29 @@ public class CurrentPassport {
     }
 
     private Unlocker lock() {
-        boolean locked = false;
-        if ((historyLock.isLocked() && !historyLock.isHeldByCurrentThread()) || !(locked = historyLock.tryLock())) {
-            Thread owner = historyLock.getOwner();
-            String ownerStack = String.valueOf(owner != null ? Arrays.asList(owner.getStackTrace()) : historyLock);
-            logger.warn(
-                    "CurrentPassport already locked!, other={}, self={}",
-                    ownerStack,
-                    Thread.currentThread(),
-                    new ConcurrentModificationException());
+            boolean locked = false;
+            // Preserve short-circuit semantics: avoid tryLock if another thread already holds the lock.
+            boolean ownerDifferent = historyLock.isLocked() && !historyLock.isHeldByCurrentThread();
+            if (ownerDifferent || !(locked = historyLock.tryLock())) {
+                // Only assemble the expensive diagnostic data if the logger will actually use it.
+                if (logger.isWarnEnabled()) {
+                    Thread owner = historyLock.getOwner();
+                    String ownerStack = owner != null ? Arrays.toString(owner.getStackTrace()) : String.valueOf(historyLock);
+                    logger.warn(
+                            "CurrentPassport already locked!, other={}, self={}",
+                            ownerStack,
+                            Thread.currentThread(),
+                            new ConcurrentModificationException());
+                } else {
+                    // If warning is disabled, avoid allocations and skip constructing the exception/stack.
+                    // Calling warn() is avoided entirely to eliminate the unnecessary overhead.
+                }
+            }
+            if (!locked) {
+                historyLock.lock();
+            }
+            return unlocker;
         }
-        if (!locked) {
-            historyLock.lock();
-        }
-        return unlocker;
-    }
 
     CurrentPassport() {
         this(SYSTEM_TICKER);
