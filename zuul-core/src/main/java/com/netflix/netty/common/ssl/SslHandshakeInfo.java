@@ -120,16 +120,18 @@ public class SslHandshakeInfo {
             X509Certificate clientCertificate,
             boolean usingExternalPSK,
             ClientPSKIdentityInfo clientPSKIdentityInfo) {
-        this.requestedSni = requestedSni;
-        this.protocol = protocol;
-        this.cipherSuite = cipherSuite;
-        this.namedGroup = null;
-        this.clientAuthRequirement = clientAuthRequirement;
-        this.serverCertificate = serverCertificate;
-        this.clientCertificate = clientCertificate;
-        this.isOfIntermediary = isOfIntermediary;
-        this.usingExternalPSK = usingExternalPSK;
-        this.clientPSKIdentityInfo = clientPSKIdentityInfo;
+        // Delegate to the generated all-args constructor to avoid manual field re-assignment.
+        this(
+                requestedSni,
+                protocol,
+                cipherSuite,
+                null,
+                clientAuthRequirement,
+                serverCertificate,
+                clientCertificate,
+                isOfIntermediary,
+                usingExternalPSK,
+                clientPSKIdentityInfo);
     }
 
     public String getRequestedSni() {
