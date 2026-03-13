@@ -25,6 +25,7 @@ public class ZuulException extends RuntimeException {
     private final String errorCause;
     private int statusCode = 500;
     private boolean shouldLogAsError = true;
+    private static final String GENERAL = "GENERAL";
 
     /**
      * Source Throwable, message, status code and info about the cause
@@ -53,12 +54,12 @@ public class ZuulException extends RuntimeException {
 
     public ZuulException(Throwable throwable, String sMessage, boolean noStackTrace) {
         super(sMessage, throwable, noStackTrace, !noStackTrace);
-        this.errorCause = "GENERAL";
+        this.errorCause = GENERAL;
     }
 
     public ZuulException(Throwable throwable) {
         super(throwable);
-        this.errorCause = "GENERAL";
+        this.errorCause = GENERAL;
     }
 
     public ZuulException(String sMessage) {
@@ -67,7 +68,7 @@ public class ZuulException extends RuntimeException {
 
     public ZuulException(String sMessage, boolean noStackTrace) {
         super(sMessage, null, noStackTrace, !noStackTrace);
-        this.errorCause = "GENERAL";
+        this.errorCause = GENERAL;
     }
 
     public int getStatusCode() {
