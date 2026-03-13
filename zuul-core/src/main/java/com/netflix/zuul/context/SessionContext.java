@@ -540,8 +540,11 @@ public final class SessionContext extends HashMap<String, Object> implements Clo
         return (Map<String, Object>) this.get(KEY_EVENT_PROPS);
     }
 
+    @SuppressWarnings("unchecked")
     public List<FilterError> getFilterErrors() {
-        return (List<FilterError>) get(KEY_FILTER_ERRORS);
+        // Fast-path the common retrieval by directly querying the HashMap implementation,
+        // avoiding the extra indirection of calling this.get(...) which would dispatch back here.
+        return (List<FilterError>) super.get(KEY_FILTER_ERRORS);
     }
 
     public void setOriginReportedDuration(int duration) {
