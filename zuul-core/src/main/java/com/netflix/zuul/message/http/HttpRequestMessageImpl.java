@@ -151,11 +151,17 @@ public class HttpRequestMessageImpl implements HttpRequestMessage {
         this.protocol = protocol;
         this.method = method;
         this.path = path;
-        try {
-            this.decodedPath = URLDecoder.decode(path, "UTF-8");
-        } catch (Exception e) {
-            // fail to decode URI
-            // just set decodedPath to original path
+        // Only attempt to decode if there is a percent-encoded sequence; avoid unnecessary work and exceptions.
+        if (path != null && path.indexOf('%') != -1) {
+            try {
+                this.decodedPath = URLDecoder.decode(path, java.nio.charset.StandardCharsets.UTF_8);
+            } catch (IllegalArgumentException e) {
+                // fail to decode URI (malformed percent-encoding)
+                // just set decodedPath to original path
+                this.decodedPath = path;
+            }
+        } else {
+            // No percent encodings present - skip decode.
             this.decodedPath = path;
         }
         // Don't allow this to be null.
