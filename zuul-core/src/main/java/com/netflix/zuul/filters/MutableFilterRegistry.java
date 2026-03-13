@@ -46,7 +46,8 @@ public final class MutableFilterRegistry implements FilterRegistry {
 
     @Override
     public int size() {
-        return filters.size();
+        long count = filters.mappingCount();
+        return count >= Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) count;
     }
 
     @Override
