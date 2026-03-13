@@ -182,7 +182,8 @@ public class StatsManager {
 
     @VisibleForTesting
     static final String extractClientIpFromXForwardedFor(String xForwardedFor) {
-        return xForwardedFor.split(",", -1)[0];
+        int idx = xForwardedFor.indexOf(',');
+        return (idx == -1) ? xForwardedFor : xForwardedFor.substring(0, idx);
     }
 
     /**
