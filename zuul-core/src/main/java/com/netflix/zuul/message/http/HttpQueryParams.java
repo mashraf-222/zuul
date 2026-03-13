@@ -54,51 +54,61 @@ public class HttpQueryParams implements Cloneable {
     }
 
     public static HttpQueryParams parse(String queryString) {
-        HttpQueryParams queryParams = new HttpQueryParams();
-        if (queryString == null) {
+            HttpQueryParams queryParams = new HttpQueryParams();
+            if (queryString == null) {
+                return queryParams;
+            }
+
+            int len = queryString.length();
+            int pos = 0;
+            while (pos < len) {
+                int amp = queryString.indexOf('&', pos);
+                int end = (amp == -1) ? len : amp;
+
+                // Skip empty tokens (StringTokenizer would skip consecutive delimiters)
+                if (end == pos) {
+                    pos = end + 1;
+                    continue;
+                }
+
+                int eq = queryString.indexOf('=', pos);
+                // key-value query param (only if '=' is not at the start of the token)
+                if (eq > pos && eq < end) {
+                    String name = queryString.substring(pos, eq);
+                    String value = queryString.substring(eq + 1, end);
+
+                    try {
+                        name = URLDecoder.decode(name, StandardCharsets.UTF_8);
+                        value = URLDecoder.decode(value, StandardCharsets.UTF_8);
+                    } catch (Exception e) {
+                        // do nothing
+                    }
+
+                    queryParams.add(name, value);
+
+                    // respect trailing equals for key-only params
+                    if (end - 1 >= pos && queryString.charAt(end - 1) == '=' && value.isEmpty()) {
+                        queryParams.setTrailingEquals(name, true);
+                    }
+                }
+                // key only
+                else {
+                    String name = queryString.substring(pos, end);
+
+                    try {
+                        name = URLDecoder.decode(name, StandardCharsets.UTF_8);
+                    } catch (Exception e) {
+                        // do nothing
+                    }
+
+                    queryParams.add(name, "");
+                }
+
+                pos = end + 1;
+            }
+
             return queryParams;
         }
-
-        StringTokenizer st = new StringTokenizer(queryString, "&");
-        int i;
-        while (st.hasMoreTokens()) {
-            String s = st.nextToken();
-            i = s.indexOf("=");
-            // key-value query param
-            if (i > 0) {
-                String name = s.substring(0, i);
-                String value = s.substring(i + 1);
-
-                try {
-                    name = URLDecoder.decode(name, StandardCharsets.UTF_8);
-                    value = URLDecoder.decode(value, StandardCharsets.UTF_8);
-                } catch (Exception e) {
-                    // do nothing
-                }
-
-                queryParams.add(name, value);
-
-                // respect trailing equals for key-only params
-                if (s.endsWith("=") && value.isEmpty()) {
-                    queryParams.setTrailingEquals(name, true);
-                }
-            }
-            // key only
-            else if (!s.isEmpty()) {
-                String name = s;
-
-                try {
-                    name = URLDecoder.decode(name, StandardCharsets.UTF_8);
-                } catch (Exception e) {
-                    // do nothing
-                }
-
-                queryParams.add(name, "");
-            }
-        }
-
-        return queryParams;
-    }
 
     /**
      * Get the first value found for this key even if there are multiple. If none, then
