@@ -460,14 +460,29 @@ public final class Headers {
     public boolean removeIf(Predicate<? super Map.Entry<HeaderName, String>> filter) {
         Objects.requireNonNull(filter, "filter");
         boolean removed = false;
+
+        // Cache locals to avoid repeated field access/bounds checks in the hot loop
+        final List<String> origList = this.originalNames;
+        final List<String> nameList = this.names;
+        final List<String> valueList = this.values;
+        int n = nameList.size();
+
         int w = 0;
-        for (int r = 0; r < size(); r++) {
-            if (filter.test(new SimpleImmutableEntry<>(new HeaderName(originalName(r), name(r)), value(r)))) {
+        for (int r = 0; r < n; r++) {
+            final String orig = origList.get(r);
+            final String nm = nameList.get(r);
+            final String val = valueList.get(r);
+
+            // Construct entry for predicate test (matches original behavior of creating fresh immutable entry)
+            if (filter.test(new SimpleImmutableEntry<>(new HeaderName(orig, nm), val))) {
                 removed = true;
             } else {
-                originalName(w, originalName(r));
-                name(w, name(r));
-                value(w, value(r));
+                // Only perform write if read and write indices differ to avoid unnecessary set/add work
+                if (w != r) {
+                    originalName(w, orig);
+                    name(w, nm);
+                    value(w, val);
+                }
                 w++;
             }
         }
