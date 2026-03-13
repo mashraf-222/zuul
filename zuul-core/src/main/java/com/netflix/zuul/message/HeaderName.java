@@ -31,9 +31,6 @@ public final class HeaderName {
     private final int hashCode;
 
     public HeaderName(String name) {
-        if (name == null) {
-            throw new NullPointerException("HeaderName cannot be null!");
-        }
         this.name = name;
         this.normalised = normalize(name);
         this.hashCode = this.normalised.hashCode();
@@ -57,7 +54,16 @@ public final class HeaderName {
     }
 
     static String normalize(String s) {
-        return s.toLowerCase(Locale.ROOT);
+        // Fast-path: if the string contains no uppercase characters according to Unicode,
+        // return it directly to avoid unnecessary allocation. Otherwise delegate to
+        // standard toLowerCase(Locale.ROOT) to preserve exact Locale.ROOT semantics.
+        int len = s.length();
+        for (int i = 0; i < len; i++) {
+            if (Character.isUpperCase(s.charAt(i))) {
+                return s.toLowerCase(Locale.ROOT);
+            }
+        }
+        return s;
     }
 
     @Override
@@ -69,6 +75,10 @@ public final class HeaderName {
             return false;
         }
         HeaderName that = (HeaderName) o;
+        // Quick-fail on differing precomputed hash codes, then compare normalized strings.
+        if (this.hashCode != that.hashCode) {
+            return false;
+        }
         return this.normalised.equals(that.normalised);
     }
 
