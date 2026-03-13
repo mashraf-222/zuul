@@ -69,6 +69,9 @@ public final class HeaderName {
             return false;
         }
         HeaderName that = (HeaderName) o;
+        if (this.hashCode != that.hashCode) {
+            return false;
+        }
         return this.normalised.equals(that.normalised);
     }
 
