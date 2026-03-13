@@ -44,6 +44,8 @@ public class HttpResponseMessageImpl implements HttpResponseMessage {
     private final HttpRequestMessage outboundRequest;
     private int status;
     private HttpResponseInfo inboundResponse = null;
+    private static final String MISSING_INBOUND_REQUEST_WARNING = "HttpResponseMessage created with a request that does not have a stored inboundRequest! Probably a"
+                + " bug in the filter that is creating this response.";
 
     public HttpResponseMessageImpl(SessionContext context, HttpRequestMessage request, int status) {
         this(context, new Headers(), request, status);
@@ -52,11 +54,12 @@ public class HttpResponseMessageImpl implements HttpResponseMessage {
     public HttpResponseMessageImpl(SessionContext context, Headers headers, HttpRequestMessage request, int status) {
         this.message = new ZuulMessageImpl(context, headers);
         this.outboundRequest = request;
+        // Cache the inbound request check to avoid a repeated method call and avoid allocating the RuntimeException
+        // unless logging is actually enabled.
         if (this.outboundRequest.getInboundRequest() == null) {
-            LOG.warn(
-                    "HttpResponseMessage created with a request that does not have a stored inboundRequest! Probably a"
-                            + " bug in the filter that is creating this response.",
-                    new RuntimeException("Invalid HttpRequestMessage"));
+            if (LOG.isWarnEnabled()) {
+                LOG.warn(MISSING_INBOUND_REQUEST_WARNING, new RuntimeException("Invalid HttpRequestMessage"));
+            }
         }
         this.status = status;
     }
