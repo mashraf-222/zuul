@@ -122,9 +122,10 @@ public final class SessionContext extends HashMap<String, Object> implements Clo
         // 16 entries.
         super(INITIAL_SIZE);
 
-        put(KEY_FILTER_EXECS, new StringBuilder());
-        put(KEY_EVENT_PROPS, new HashMap<String, Object>(EVENT_PROPERTIES_INITIAL_SIZE));
-        put(KEY_FILTER_ERRORS, new ArrayList<FilterError>());
+        // Pre-size commonly mutated structures to avoid repeated resizing and allocation in hot paths.
+        put(KEY_FILTER_EXECS, new StringBuilder(256));
+        put(KEY_EVENT_PROPS, new HashMap<String, Object>(EVENT_PROPERTIES_INITIAL_SIZE, 0.75f));
+        put(KEY_FILTER_ERRORS, new ArrayList<FilterError>(8));
     }
 
     public static <T> Key<T> newKey(String name) {
