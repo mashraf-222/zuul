@@ -71,6 +71,9 @@ public final class SessionContext extends HashMap<String, Object> implements Clo
     private static final String KEY_FILTER_EXECS = "_filter_executions";
 
     private final IdentityHashMap<Key<?>, ?> typedMap = new IdentityHashMap<>();
+    private Object cachedFilterExecs;
+    private Object cachedEventProps;
+    private Object cachedFilterErrors;
 
     /**
      * A Key is type-safe, identity-based key into the Session Context.
@@ -125,6 +128,8 @@ public final class SessionContext extends HashMap<String, Object> implements Clo
         put(KEY_FILTER_EXECS, new StringBuilder());
         put(KEY_EVENT_PROPS, new HashMap<String, Object>(EVENT_PROPERTIES_INITIAL_SIZE));
         put(KEY_FILTER_ERRORS, new ArrayList<FilterError>());
+
+        // Initialize caches from the map (put(...) already updated caches via overridden put)
     }
 
     public static <T> Key<T> newKey(String name) {
@@ -563,4 +568,21 @@ public final class SessionContext extends HashMap<String, Object> implements Clo
     public void cancel() {
         this.cancelled = true;
     }
+
+    @Override
+    public void clear() {
+        cachedFilterExecs = null;
+        cachedEventProps = null;
+        cachedFilterErrors = null;
+        super.clear();
+    }
+
+    @Override
+    public void putAll(Map<? extends String, ? extends Object> m) {
+        // Use put per entry so caches are updated via our overridden put implementation.
+        for (Entry<? extends String, ? extends Object> e : m.entrySet()) {
+            put(e.getKey(), e.getValue());
+        }
+    }
+
 }
