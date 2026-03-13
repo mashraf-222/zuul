@@ -24,10 +24,7 @@ public final class Header {
     private final String value;
 
     public Header(HeaderName name, String value) {
-        if (name == null) {
-            throw new NullPointerException("Header name cannot be null!");
-        }
-        this.name = name;
+        this.name = java.util.Objects.requireNonNull(name, "Header name cannot be null!");
         this.value = value;
     }
 
