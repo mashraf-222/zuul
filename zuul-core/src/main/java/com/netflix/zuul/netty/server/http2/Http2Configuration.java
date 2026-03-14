@@ -24,6 +24,14 @@ import io.netty.handler.ssl.SslContextBuilder;
 import javax.net.ssl.SSLException;
 
 public class Http2Configuration {
+    private static final ApplicationProtocolConfig APN = new ApplicationProtocolConfig(
+                ApplicationProtocolConfig.Protocol.ALPN,
+                // NO_ADVERTISE is currently the only mode supported by both OpenSsl and JDK providers.
+                ApplicationProtocolConfig.SelectorFailureBehavior.NO_ADVERTISE,
+                // ACCEPT is currently the only mode supported by both OpenSsl and JDK providers.
+                ApplicationProtocolConfig.SelectedListenerFailureBehavior.ACCEPT,
+                ApplicationProtocolNames.HTTP_1_1);
+
 
     public static SslContext configureSSL(SslContextFactory sslContextFactory, String metricId) {
         SslContextBuilder builder = sslContextFactory.createBuilderForServer();
@@ -53,18 +61,9 @@ public class Http2Configuration {
         return sslContext;
     }
 
-    /**
-     * This is meant to be use in cases where the server wishes not to advertise h2 as part of ALPN.
-     */
     public static SslContext configureSSLWithH2Disabled(SslContextFactory sslContextFactory, String host) {
 
-        ApplicationProtocolConfig apn = new ApplicationProtocolConfig(
-                ApplicationProtocolConfig.Protocol.ALPN,
-                // NO_ADVERTISE is currently the only mode supported by both OpenSsl and JDK providers.
-                ApplicationProtocolConfig.SelectorFailureBehavior.NO_ADVERTISE,
-                // ACCEPT is currently the only mode supported by both OpenSsl and JDK providers.
-                ApplicationProtocolConfig.SelectedListenerFailureBehavior.ACCEPT,
-                ApplicationProtocolNames.HTTP_1_1);
+        ApplicationProtocolConfig apn = APN;
         SslContext sslContext;
         try {
             sslContext = sslContextFactory
