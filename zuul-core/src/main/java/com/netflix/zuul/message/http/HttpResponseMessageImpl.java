@@ -129,7 +129,10 @@ public class HttpResponseMessageImpl implements HttpResponseMessage {
 
     @Override
     public boolean finishBufferedBodyIfIncomplete() {
-        return message.finishBufferedBodyIfIncomplete();
+        // Cache the final field into a local variable and call the concrete implementation directly.
+        // This avoids an interface dispatch and allows the JIT to devirtualize/inline the hot-path call.
+        ZuulMessageImpl m = (ZuulMessageImpl) this.message;
+        return m.finishBufferedBodyIfIncomplete();
     }
 
     @Override
