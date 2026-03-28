@@ -49,11 +49,14 @@ public final class DiscoveryResult implements ResolverResult {
                     .setPort(-1)
                     .build(),
             false);
+    private final boolean securePortEnabled;
 
     public DiscoveryResult(DiscoveryEnabledServer server, LoadBalancerStats lbStats) {
         this.server = server;
         Objects.requireNonNull(lbStats, "Loadbalancer stats must be a valid instance");
         this.serverStats = lbStats.getSingleServerStat(server);
+        // Cache the secure port enabled flag. InstanceInfo used here is effectively immutable for the lifetime of the server.
+        this.securePortEnabled = server.getInstanceInfo().isPortEnabled(PortType.SECURE);
     }
 
     /**
@@ -68,6 +71,8 @@ public final class DiscoveryResult implements ResolverResult {
                 return "no stats configured for server";
             }
         };
+        // Cache the secure port enabled flag for consistency and performance even for the no-stats constructor
+        this.securePortEnabled = server.getInstanceInfo().isPortEnabled(PortType.SECURE);
     }
 
     /**
@@ -115,7 +120,7 @@ public final class DiscoveryResult implements ResolverResult {
     }
 
     public boolean isSecurePortEnabled() {
-        return server.getInstanceInfo().isPortEnabled(PortType.SECURE);
+        return securePortEnabled;
     }
 
     public String getTarget() {
