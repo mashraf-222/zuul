@@ -30,7 +30,7 @@ public enum FilterType {
 
     private final String shortName;
 
-    private FilterType(String shortName) {
+    FilterType(String shortName) {
         this.shortName = shortName;
     }
 
