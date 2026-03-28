@@ -22,8 +22,10 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class NullChannelHandlerProvider implements Provider<ChannelHandler> {
+    private static final ChannelHandler INSTANCE = null;
+
     @Override
     public ChannelHandler get() {
-        return null;
+        return INSTANCE;
     }
 }
