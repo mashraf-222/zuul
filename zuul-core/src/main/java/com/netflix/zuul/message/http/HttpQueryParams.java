@@ -40,17 +40,32 @@ public class HttpQueryParams implements Cloneable {
     private final ListMultimap<String, String> delegate;
     private final boolean immutable;
     private final Map<String, Boolean> trailingEquals;
+    private final Set<String> lowerCaseKeys;
 
     public HttpQueryParams() {
         delegate = LinkedListMultimap.create();
         immutable = false;
         trailingEquals = new HashMap<>();
+        lowerCaseKeys = null;
     }
 
     private HttpQueryParams(ListMultimap<String, String> delegate) {
         this.delegate = delegate;
         immutable = ImmutableListMultimap.class.isAssignableFrom(delegate.getClass());
         trailingEquals = new HashMap<>();
+        if (immutable) {
+            // Build a cached hash set of lower-cased keys for fast containsIgnoreCase checks.
+            Set<String> tmp = new java.util.HashSet<>(delegate.keySet().size() * 2 + 1);
+            for (String k : delegate.keySet()) {
+                // Preserve original behavior regarding nulls (original code didn't guard; this mirrors robust handling)
+                if (k != null) {
+                    tmp.add(k.toLowerCase(Locale.ROOT));
+                }
+            }
+            lowerCaseKeys = tmp;
+        } else {
+            lowerCaseKeys = null;
+        }
     }
 
     public static HttpQueryParams parse(String queryString) {
@@ -129,7 +144,16 @@ public class HttpQueryParams implements Cloneable {
      * However, as a utility, this exists to allow us to do a case insensitive match on demand.
      */
     public boolean containsIgnoreCase(String name) {
-        return delegate.containsKey(name) || delegate.containsKey(name.toLowerCase(Locale.ROOT));
+        if (delegate.containsKey(name)) {
+            return true;
+        }
+        // If we have a cached set of lower-cased keys (immutable delegate), use it for O(1) lookup.
+        Set<String> lc = lowerCaseKeys;
+        if (lc != null) {
+            return lc.contains(name.toLowerCase(Locale.ROOT));
+        }
+        // Fallback to original behavior for mutable delegates to avoid cache staleness.
+        return delegate.containsKey(name.toLowerCase(Locale.ROOT));
     }
 
     /**
