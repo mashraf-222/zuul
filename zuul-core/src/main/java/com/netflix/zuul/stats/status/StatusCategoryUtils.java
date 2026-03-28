@@ -40,7 +40,7 @@ public class StatusCategoryUtils {
 
     @Nullable
     public static String getStatusCategoryReason(SessionContext ctx) {
-        return ctx.get(CommonContextKeys.STATUS_CATEGORY_REASON);
+        return (String) ctx.get(CommonContextKeys.STATUS_CATEGORY_REASON);
     }
 
     public static void setStatusCategory(SessionContext ctx, StatusCategory statusCategory) {
