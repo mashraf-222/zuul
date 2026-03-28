@@ -64,7 +64,7 @@ public class StatusCategoryUtils {
 
     @Nullable
     public static String getOriginStatusCategoryReason(SessionContext ctx) {
-        return ctx.get(CommonContextKeys.ORIGIN_STATUS_CATEGORY_REASON);
+        return (String) ctx.get(CommonContextKeys.ORIGIN_STATUS_CATEGORY_REASON);
     }
 
     public static void setOriginStatusCategory(SessionContext ctx, StatusCategory statusCategory) {
