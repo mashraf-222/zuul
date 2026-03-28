@@ -120,11 +120,14 @@ public final class SessionContext extends HashMap<String, Object> implements Clo
     public SessionContext() {
         // Use a higher than default initial capacity for the hashmap as we generally have more than the default
         // 16 entries.
-        super(INITIAL_SIZE);
+        // Compute capacities that account for HashMap's default load factor (0.75) so the internal table
+        // won't need to resize when we put the expected number of entries.
+        super(tableCapacityFor(INITIAL_SIZE));
 
+        // Pre-size nested collections to avoid growth/resizing costs.
         put(KEY_FILTER_EXECS, new StringBuilder());
-        put(KEY_EVENT_PROPS, new HashMap<String, Object>(EVENT_PROPERTIES_INITIAL_SIZE));
-        put(KEY_FILTER_ERRORS, new ArrayList<FilterError>());
+        put(KEY_EVENT_PROPS, new HashMap<String, Object>(tableCapacityFor(EVENT_PROPERTIES_INITIAL_SIZE)));
+        put(KEY_FILTER_ERRORS, new ArrayList<FilterError>(4));
     }
 
     public static <T> Key<T> newKey(String name) {
@@ -503,6 +506,15 @@ public final class SessionContext extends HashMap<String, Object> implements Clo
      */
     public void stopFilterProcessing() {
         shouldStopFilterProcessing = true;
+    }
+
+    private static int tableCapacityFor(int expectedSize) {
+        if (expectedSize <= 0) {
+            return 1;
+        }
+        // Account for default load factor (0.75) and add one to be safe to ensure no immediate resize.
+        // Equivalent to ceil(expectedSize / 0.75) + 1
+        return (int) ((expectedSize / 0.75f) + 1);
     }
 
     public boolean shouldStopFilterProcessing() {
