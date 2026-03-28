@@ -47,8 +47,9 @@ public class JsonUtility {
             JsonDocument json = new JsonDocument();
             json.startGroup();
 
-            for (String key : jsonData.keySet()) {
-                Object data = jsonData.get(key);
+            for (Map.Entry<String, Object> entry : jsonData.entrySet()) {
+                String key = entry.getKey();
+                Object data = entry.getValue();
                 if (data instanceof Map) {
                     /* it's a nested map, so we'll recursively add the JSON of this map to the current JSON */
                     json.addValue(key, jsonFromMap((Map<String, Object>) data));
@@ -57,12 +58,10 @@ public class JsonUtility {
                     json.addValue(key, "[" + stringArrayFromObjectArray((Object[]) data) + "]");
                 } else if (data instanceof Collection) {
                     /* it's a collection, so we'll iterate the elements and put them all in here */
-                    json.addValue(key, "[" + stringArrayFromObjectArray(((Collection) data).toArray()) + "]");
+                    json.addValue(key, "[" + stringArrayFromCollection((Collection<?>) data) + "]");
                 } else if (data instanceof int[]) {
                     /* it's an int array, so we'll get the string representation */
-                    String intArray = Arrays.toString((int[]) data);
-                    /* remove whitespace */
-                    intArray = intArray.replaceAll(" ", "");
+                    String intArray = intArrayToString((int[]) data);
                     json.addValue(key, intArray);
                 } else if (data instanceof JsonCapableObject) {
                     json.addValue(key, jsonFromMap(((JsonCapableObject) data).jsonMap()));
@@ -147,4 +146,43 @@ public class JsonUtility {
 
         public Map<String, Object> jsonMap();
     }
+
+    private static String stringArrayFromCollection(Collection<?> data) {
+        StringBuilder arrayAsString = new StringBuilder();
+        boolean first = true;
+        for (Object o : data) {
+            if (!first) {
+                arrayAsString.append(',');
+            } else {
+                first = false;
+            }
+            if (o instanceof Map) {
+                arrayAsString.append(jsonFromMap((Map<String, Object>) o));
+            } else if (o instanceof JsonCapableObject) {
+                arrayAsString.append(jsonFromMap(((JsonCapableObject) o).jsonMap()));
+            } else {
+                arrayAsString.append('"').append(String.valueOf(o)).append('"');
+            }
+        }
+        return arrayAsString.toString();
+    }
+
+    private static String intArrayToString(int[] arr) {
+        if (arr == null) {
+            return "null";
+        }
+        int len = arr.length;
+        if (len == 0) {
+            return "[]";
+        }
+        StringBuilder sb = new StringBuilder(len * 3 + 2); // heuristic sizing
+        sb.append('[');
+        sb.append(arr[0]);
+        for (int i = 1; i < len; i++) {
+            sb.append(',').append(arr[i]);
+        }
+        sb.append(']');
+        return sb.toString();
+    }
+
 }
