@@ -40,6 +40,8 @@ public class HttpQueryParams implements Cloneable {
     private final ListMultimap<String, String> delegate;
     private final boolean immutable;
     private final Map<String, Boolean> trailingEquals;
+    private volatile int cachedHash;
+    private volatile boolean cachedHashComputed;
 
     public HttpQueryParams() {
         delegate = LinkedListMultimap.create();
@@ -224,7 +226,17 @@ public class HttpQueryParams implements Cloneable {
 
     @Override
     public int hashCode() {
-        return delegate.hashCode();
+        if (!immutable) {
+            return delegate.hashCode();
+        }
+        // For immutable instances, compute once and cache.
+        if (cachedHashComputed) {
+            return cachedHash;
+        }
+        int h = delegate.hashCode();
+        cachedHash = h;
+        cachedHashComputed = true;
+        return h;
     }
 
     @Override
