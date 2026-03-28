@@ -273,11 +273,19 @@ public class HttpResponseMessageImpl implements HttpResponseMessage {
 
     @Override
     public String getInfoForLogging() {
-        HttpRequestInfo req = getInboundRequest() == null ? getOutboundRequest() : getInboundRequest();
-        StringBuilder sb = new StringBuilder()
-                .append(req.getInfoForLogging())
-                .append(",proxy-status=")
-                .append(getStatus());
+        // Cache inbound request lookup to avoid duplicate calls.
+        HttpRequestInfo inbound = getInboundRequest();
+        HttpRequestInfo req = (inbound == null) ? getOutboundRequest() : inbound;
+        String reqInfo = req.getInfoForLogging();
+
+        // Estimate capacity: request info length (may be 0) + constant suffix + digits in status.
+        // This avoids unnecessary StringBuilder resizes on common paths.
+        int suffixLen = ",proxy-status=".length();
+        int statusDigits = Integer.toString(getStatus()).length();
+        int initialCapacity = (reqInfo != null ? reqInfo.length() : 0) + suffixLen + statusDigits;
+
+        StringBuilder sb = new StringBuilder(initialCapacity);
+        sb.append(reqInfo).append(",proxy-status=").append(getStatus());
         return sb.toString();
     }
 }
