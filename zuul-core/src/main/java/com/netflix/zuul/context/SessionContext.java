@@ -71,6 +71,9 @@ public final class SessionContext extends HashMap<String, Object> implements Clo
     private static final String KEY_FILTER_EXECS = "_filter_executions";
 
     private final IdentityHashMap<Key<?>, ?> typedMap = new IdentityHashMap<>();
+    private final StringBuilder cachedFilterExecutions;
+    private final Map<String, Object> cachedEventProperties;
+    private final List<FilterError> cachedFilterErrors;
 
     /**
      * A Key is type-safe, identity-based key into the Session Context.
@@ -122,9 +125,14 @@ public final class SessionContext extends HashMap<String, Object> implements Clo
         // 16 entries.
         super(INITIAL_SIZE);
 
-        put(KEY_FILTER_EXECS, new StringBuilder());
-        put(KEY_EVENT_PROPS, new HashMap<String, Object>(EVENT_PROPERTIES_INITIAL_SIZE));
-        put(KEY_FILTER_ERRORS, new ArrayList<FilterError>());
+        // Initialize and cache frequently accessed entries to avoid repeated map lookups.
+        this.cachedFilterExecutions = new StringBuilder();
+        this.cachedEventProperties = new HashMap<String, Object>(EVENT_PROPERTIES_INITIAL_SIZE);
+        this.cachedFilterErrors = new ArrayList<FilterError>();
+
+        put(KEY_FILTER_EXECS, cachedFilterExecutions);
+        put(KEY_EVENT_PROPS, cachedEventProperties);
+        put(KEY_FILTER_ERRORS, cachedFilterErrors);
     }
 
     public static <T> Key<T> newKey(String name) {
