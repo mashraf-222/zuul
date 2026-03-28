@@ -138,7 +138,7 @@ public class ZuulMessageImpl implements ZuulMessage {
     @Override
     public String getBodyAsText() {
         byte[] body = getBody();
-        return (body != null && body.length > 0) ? new String(getBody(), Charsets.UTF_8) : null;
+        return (body != null && body.length > 0) ? new String(body, Charsets.UTF_8) : null;
     }
 
     @Override
