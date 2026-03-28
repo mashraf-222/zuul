@@ -49,6 +49,12 @@ public final class DiscoveryResult implements ResolverResult {
                     .setPort(-1)
                     .build(),
             false);
+    private static final ServerStats NO_STATS = new ServerStats() {
+            @Override
+            public String toString() {
+                return "no stats configured for server";
+            }
+        };
 
     public DiscoveryResult(DiscoveryEnabledServer server, LoadBalancerStats lbStats) {
         this.server = server;
@@ -62,12 +68,7 @@ public final class DiscoveryResult implements ResolverResult {
      */
     public DiscoveryResult(DiscoveryEnabledServer server) {
         this.server = server;
-        this.serverStats = new ServerStats() {
-            @Override
-            public String toString() {
-                return "no stats configured for server";
-            }
-        };
+        this.serverStats = NO_STATS;
     }
 
     /**
@@ -97,7 +98,8 @@ public final class DiscoveryResult implements ResolverResult {
 
     @Override
     public String getHost() {
-        return server == null ? "undefined" : server.getHost();
+        final DiscoveryEnabledServer s = server;
+        return s == null ? "undefined" : s.getHost();
     }
 
     @Override
