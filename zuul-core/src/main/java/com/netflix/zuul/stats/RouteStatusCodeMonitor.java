@@ -46,8 +46,13 @@ public class RouteStatusCodeMonitor implements NamedCount {
         }
         this.route = route;
         this.statusCode = statusCode;
-        this.routeCode = route + "_" + statusCode;
+        // Pre-size the StringBuilder to avoid internal buffer growth and extra temporaries.
+        StringBuilder sb = new StringBuilder(route.length() + 6);
+        sb.append(route).append('_').append(statusCode);
+        this.routeCode = sb.toString();
+
         Registry registry = Spectator.globalRegistry();
+        // Cache the created id locally to avoid repeated lookups
         PolledMeter.using(registry)
                 .withId(registry.createId("zuul.RouteStatusCodeMonitor", "ID", routeCode))
                 .monitorValue(this, RouteStatusCodeMonitor::getCount);
